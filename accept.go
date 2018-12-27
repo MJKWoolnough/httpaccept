@@ -48,11 +48,11 @@ type Handler interface {
 }
 
 // HandlerFunc wraps a func to make it satisfy the Handler interface
-type HandlerFunc func(string) bool
+type HandlerFunc func(Mime) bool
 
 // Handle calls the underlying func
-func (h HandlerFunc) Handle(e string) bool {
-	return h(e)
+func (h HandlerFunc) Handle(m Mime) bool {
+	return h(m)
 }
 
 // InvalidAccept writes the 406 header
