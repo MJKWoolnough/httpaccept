@@ -9,6 +9,8 @@ import (
 )
 
 const (
+	any          = "*"
+	matchAny     = "*/*"
 	accept       = "Accept"
 	acceptSplit  = ","
 	partSplit    = ";"
@@ -34,7 +36,34 @@ type mime struct {
 	weight uint16
 }
 
+// Mime represents a accepted Mime Type
 type Mime string
+
+// Match checks to see whether a given Mime Type matches the value.
+//
+// The method allows for wildcards in the subtype sections.
+func (m Mime) Match(n Mime) bool {
+	if strings.EqualFold(string(m), string(n)) || m == matchAny || n == matchAny {
+		return true
+	}
+	mParts := [2]string{any, any}
+	mPos := strings.IndexByte(string(m), '/')
+	if mPos < 0 {
+		mParts[0] = string(m)
+	} else {
+		mParts[0] = string(m[:mPos])
+		mParts[1] = string(m[mPos+1:])
+	}
+	nParts := [2]string{any, any}
+	nPos := strings.IndexByte(string(n), '/')
+	if nPos < 0 {
+		nParts[0] = string(n)
+	} else {
+		nParts[0] = string(n[:nPos])
+		nParts[1] = string(n[nPos+1:])
+	}
+	return strings.EqualFold(mParts[0], nParts[0]) && (strings.EqualFold(mParts[1], nParts[1]) || mParts[1] == any || nParts[1] == any)
+}
 
 // Handler provides an interface to handle a mime type.
 //
