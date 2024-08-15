@@ -14,7 +14,7 @@ func HandleAccept(r *http.Request, h Handler) bool
 HandleAccept will process the Accept header and calls the given handler for each
 mime type until the handler returns true.
 
-This function returns true when the Handler returns true, false otherwise
+This function returns true when the Handler returns true, false otherwise.
 
 When no Accept header is given the mime string will be the empty string.
 
@@ -23,7 +23,7 @@ When no Accept header is given the mime string will be the empty string.
 ```go
 func InvalidAccept(w http.ResponseWriter)
 ```
-InvalidAccept writes the 406 header
+InvalidAccept writes the 406 header.
 
 #### type Handler
 
@@ -47,14 +47,14 @@ The empty string "" is used to signify when no preference is specified.
 type HandlerFunc func(Mime) bool
 ```
 
-HandlerFunc wraps a func to make it satisfy the Handler interface
+HandlerFunc wraps a func to make it satisfy the Handler interface.
 
 #### func (HandlerFunc) Handle
 
 ```go
 func (h HandlerFunc) Handle(m Mime) bool
 ```
-Handle calls the underlying func
+Handle calls the underlying func.
 
 #### type Mime
 
@@ -62,7 +62,7 @@ Handle calls the underlying func
 type Mime string
 ```
 
-Mime represents a accepted Mime Type
+Mime represents a accepted Mime Type.
 
 #### func (Mime) Match
 
