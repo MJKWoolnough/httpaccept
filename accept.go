@@ -139,7 +139,7 @@ Loop:
 
 		for _, part := range parts[1:] {
 			if strings.HasPrefix(strings.TrimSpace(part), weightPrefix) {
-				if qVal, err = strconv.ParseFloat(part[len(weightPrefix):], 32); err != nil || qVal < 0 || qVal >= 2 {
+				if qVal, err = strconv.ParseFloat(part[len(weightPrefix):], 32); err != nil || qVal < 0 || qVal > 1 {
 					continue Loop
 				}
 
