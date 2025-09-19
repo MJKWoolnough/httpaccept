@@ -103,6 +103,9 @@ func InvalidAccept(w http.ResponseWriter) {
 //
 // This function returns true when the Handler returns true, false otherwise.
 //
+// Wildcard matches will be followed by a semi-colon delimited string of the
+// exclusions.
+//
 // When no Accept header is given the mime string will be the empty string.
 func HandleAccept(r *http.Request, h Handler) bool {
 	accepts := parseAccepts(r.Header.Get(accept))
