@@ -3,20 +3,17 @@ package httpaccept // import "vimagination.zapto.org/httpaccept"
 
 import (
 	"net/http"
+	"slices"
 	"sort"
-	"strconv"
 	"strings"
+
+	"vimagination.zapto.org/parser"
 )
 
 const (
-	wcAny        = "*"
-	matchAny     = "*/*"
-	accept       = "Accept"
-	acceptSplit  = ","
-	partSplit    = ";"
-	weightPrefix = "q="
-
-	qValMultiplier = 1000
+	wcAny    = "*"
+	matchAny = "*/*"
+	accept   = "Accept"
 )
 
 type mimes []mime
@@ -35,7 +32,7 @@ func (m mimes) Swap(i, j int) {
 
 type mime struct {
 	mime   Mime
-	weight uint16
+	weight int16
 }
 
 // Mime represents a accepted Mime Type.
@@ -112,7 +109,7 @@ func HandleAccept(r *http.Request, h Handler) bool {
 	sort.Stable(accepts)
 
 	for _, accept := range accepts {
-		if h.Handle(accept.mime) {
+		if accept.weight > 0 && h.Handle(accept.mime) {
 			return true
 		}
 	}
@@ -121,34 +118,54 @@ func HandleAccept(r *http.Request, h Handler) bool {
 }
 
 func parseAccepts(acceptHeader string) mimes {
-	acceptParts := strings.Split(acceptHeader, acceptSplit)
-	accepts := make(mimes, 0, len(acceptParts))
+	accepts := make(mimes, 0, strings.Count(acceptHeader, delim)+1)
 
-Loop:
-	for _, accept := range acceptParts {
-		parts := strings.Split(strings.TrimSpace(accept), partSplit)
-		name := strings.ToLower(strings.TrimSpace(parts[0]))
+	p := parseAccept(acceptHeader)
 
-		if name == "" {
+	for {
+		coding := p.Next()
+		if coding.Type == parser.TokenDone {
+			break
+		}
+
+		name := coding.Data
+
+		if p.Accept(tokenInvalidWeight) {
 			continue
 		}
 
-		qVal := float64(1)
+		weight := int16(1000)
 
-		var err error
-
-		for _, part := range parts[1:] {
-			if strings.HasPrefix(strings.TrimSpace(part), weightPrefix) {
-				if qVal, err = strconv.ParseFloat(part[len(weightPrefix):], 32); err != nil || qVal < 0 || qVal > 1 {
-					continue Loop
-				}
-
-				break
-			}
+		if p.Peek().Type == tokenWeight {
+			weight = parseQ(p.Next().Data)
 		}
 
-		accepts = append(accepts, mime{mime: Mime(name), weight: uint16(qVal * qValMultiplier)})
+		if slices.ContainsFunc(accepts, func(e mime) bool { return e.mime == Mime(name) }) {
+			continue
+		}
+
+		accepts = append(accepts, mime{mime: Mime(name), weight: weight})
 	}
 
 	return accepts
+}
+
+var multiplies = [...]int16{100, 10, 1}
+
+func parseQ(q string) int16 {
+	if q[0] == '1' {
+		return 1000
+	}
+
+	if len(q) < 2 {
+		return 0
+	}
+
+	var qv int16
+
+	for n, v := range q[2:] {
+		qv += int16(v-'0') * multiplies[n]
+	}
+
+	return qv
 }
