@@ -23,6 +23,8 @@ func TestOrder(t *testing.T) {
 		{"a/b", testMimes{"a/b"}},
 		{"a/b, c/d, e/f", testMimes{"a/b", "c/d", "e/f"}},
 		{"a/b;q=0, c/d;q=0.5, e/f;q=1", testMimes{"e/f", "c/d"}},
+		{"*/*, c/d;q=0, e/f;q=0", testMimes{"*/*;c/d;e/f"}},
+		{"*/*;q=0.5, c/d;q=0, e/f;q=0, e/*, */d;q=0.001", testMimes{"e/*;e/f", "*/*;c/d;e/f", "*/d;c/d"}},
 	} {
 		te := make(testMimes, 0, len(test.Encodings))
 
