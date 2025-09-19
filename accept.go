@@ -66,7 +66,7 @@ func (m Mime) Match(n Mime) bool {
 		nParts[1] = string(n[nPos+1:])
 	}
 
-	return strings.EqualFold(mParts[0], nParts[0]) && (strings.EqualFold(mParts[1], nParts[1]) || mParts[1] == wcAny || nParts[1] == wcAny)
+	return (strings.EqualFold(mParts[0], nParts[0]) || mParts[0] == wcAny || nParts[1] == wcAny) && (strings.EqualFold(mParts[1], nParts[1]) || mParts[1] == wcAny || nParts[1] == wcAny)
 }
 
 // Handler provides an interface to handle a mime type.
