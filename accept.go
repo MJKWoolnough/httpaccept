@@ -42,31 +42,36 @@ type Mime string
 //
 // The method allows for wildcards in the subtype sections.
 func (m Mime) Match(n Mime) bool {
-	if strings.EqualFold(string(m), string(n)) || m == matchAny || n == matchAny {
-		return true
+	mMime, mExcl, _ := strings.Cut(string(m), ";")
+	nMime, nExcl, _ := strings.Cut(string(n), ";")
+	mPrefix, mSuffix, _ := strings.Cut(mMime, "/")
+	nPrefix, nSuffix, _ := strings.Cut(nMime, "/")
+
+	if mPrefix != wcAny && nPrefix != wcAny && !strings.EqualFold(mPrefix, nPrefix) {
+		return false
 	}
 
-	mParts := [2]string{wcAny, wcAny}
-	mPos := strings.IndexByte(string(m), '/')
-
-	if mPos < 0 {
-		mParts[0] = string(m)
-	} else {
-		mParts[0] = string(m[:mPos])
-		mParts[1] = string(m[mPos+1:])
+	if mSuffix != wcAny && nSuffix != wcAny && !strings.EqualFold(mSuffix, nSuffix) {
+		return false
 	}
 
-	nParts := [2]string{wcAny, wcAny}
-	nPos := strings.IndexByte(string(n), '/')
-
-	if nPos < 0 {
-		nParts[0] = string(n)
-	} else {
-		nParts[0] = string(n[:nPos])
-		nParts[1] = string(n[nPos+1:])
+	if mExcl != "" {
+		for mEx := range strings.SplitSeq(mExcl, ";") {
+			if Mime(nMime).Match(Mime(mEx)) {
+				return false
+			}
+		}
 	}
 
-	return (strings.EqualFold(mParts[0], nParts[0]) || mParts[0] == wcAny || nParts[1] == wcAny) && (strings.EqualFold(mParts[1], nParts[1]) || mParts[1] == wcAny || nParts[1] == wcAny)
+	if nExcl != "" {
+		for nEx := range strings.SplitSeq(nExcl, ";") {
+			if Mime(mMime).Match(Mime(nEx)) {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 // Handler provides an interface to handle a mime type.
