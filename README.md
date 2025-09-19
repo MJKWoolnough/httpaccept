@@ -16,6 +16,9 @@ mime type until the handler returns true.
 
 This function returns true when the Handler returns true, false otherwise.
 
+Wildcard matches will be followed by a semi-colon delimited string of the
+exclusions.
+
 When no Accept header is given the mime string will be the empty string.
 
 #### func  InvalidAccept
