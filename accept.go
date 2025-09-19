@@ -147,6 +147,39 @@ func parseAccepts(acceptHeader string) mimes {
 		accepts = append(accepts, mime{mime: Mime(name), weight: weight})
 	}
 
+	return processAnys(accepts)
+}
+
+func processAnys(accepts mimes) mimes {
+	for n := range accepts {
+		if accepts[n].weight == 0 {
+			continue
+		}
+
+		if prefix, suffix, _ := strings.Cut(string(accepts[n].mime), "/"); prefix != wcAny && suffix != wcAny {
+			continue
+		}
+
+		var nots strings.Builder
+
+		nots.WriteString(string(accepts[n].mime))
+
+		for _, m := range accepts {
+			if m.weight > 0 {
+				continue
+			}
+
+			if accepts[n].mime.Match(m.mime) {
+				nots.WriteByte(';')
+				nots.WriteString(string(m.mime))
+			}
+		}
+
+		if nots.Len() > len(accepts[n].mime) {
+			accepts[n].mime = Mime(nots.String())
+		}
+	}
+
 	return accepts
 }
 
