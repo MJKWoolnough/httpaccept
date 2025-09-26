@@ -1,77 +1,101 @@
 # httpaccept
+
+[![CI](https://github.com/MJKWoolnough/httpaccept/actions/workflows/go-checks.yml/badge.svg)](https://github.com/MJKWoolnough/httpaccept/actions)
+[![Go Reference](https://pkg.go.dev/badge/vimagination.zapto.org/httpaccept.svg)](https://pkg.go.dev/vimagination.zapto.org/httpaccept)
+[![Go Report Card](https://goreportcard.com/badge/vimagination.zapto.org/httpaccept)](https://goreportcard.com/report/vimagination.zapto.org/httpaccept)
+
 --
     import "vimagination.zapto.org/httpaccept"
 
 Package httpaccept provides a function to deal with the Accept header.
 
+## Highlights
+
+ - Simple handling of `Accept` HTTP header.
+ - Supports wildcards, and q-values.
+
 ## Usage
 
-#### func  HandleAccept
-
 ```go
-func HandleAccept(r *http.Request, h Handler) bool
-```
-HandleAccept will process the Accept header and calls the given handler for each
-mime type until the handler returns true.
+package main
 
-This function returns true when the Handler returns true, false otherwise.
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 
-Wildcard matches will be followed by a semi-colon delimited string of the
-exclusions.
+	"vimagination.zapto.org/httpaccept"
+)
 
-When no Accept header is given the mime string will be the empty string.
+func handler(w http.ResponseWriter, r *http.Request) {
+	if !httpaccept.HandleAccept(r, httpaccept.HandlerFunc(func(m httpaccept.Mime) bool {
+		if m.Match("image/png") {
+			io.WriteString(w, "png")
+		} else if m.Match("image/*") {
+			io.WriteString(w, "image")
+		} else if m.Match("*/other") {
+			io.WriteString(w, "other")
+		} else {
+			return false
+		}
 
-#### func  InvalidAccept
+		return true
+	})) {
+		io.WriteString(w, "none")
+	}
+}
 
-```go
-func InvalidAccept(w http.ResponseWriter)
-```
-InvalidAccept writes the 406 header.
+func Example() {
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Accept", "image/png")
+	handler(w, r)
+	fmt.Println(w.Body)
 
-#### type Handler
+	w = httptest.NewRecorder()
+	r.Header.Set("Accept", "image/*")
+	handler(w, r)
+	fmt.Println(w.Body)
 
-```go
-type Handler interface {
-	Handle(mime Mime) bool
+	w = httptest.NewRecorder()
+	r.Header.Set("Accept", "image/gif")
+	handler(w, r)
+	fmt.Println(w.Body)
+
+	w = httptest.NewRecorder()
+	r.Header.Set("Accept", "text/other")
+	handler(w, r)
+	fmt.Println(w.Body)
+
+	w = httptest.NewRecorder()
+	r.Header.Set("Accept", "image/png, text/other")
+	handler(w, r)
+	fmt.Println(w.Body)
+
+	w = httptest.NewRecorder()
+	r.Header.Set("Accept", "image/png;q=0.5, text/other")
+	handler(w, r)
+	fmt.Println(w.Body)
+
+	w = httptest.NewRecorder()
+	r.Header.Set("Accept", "*/*;q=0")
+	handler(w, r)
+	fmt.Println(w.Body)
+
+	// Output:
+	// png
+	// png
+	// image
+	// other
+	// png
+	// other
+	// none
 }
 ```
 
-Handler provides an interface to handle a mime type.
+## Documentation
 
-The mime string (e.g. text/html, application/json, text/plain) is passed to the
-handler, which is expected to return true if no more encodings are required and
-false otherwise.
+Full API docs can be found at:
 
-The empty string "" is used to signify when no preference is specified.
-
-#### type HandlerFunc
-
-```go
-type HandlerFunc func(Mime) bool
-```
-
-HandlerFunc wraps a func to make it satisfy the Handler interface.
-
-#### func (HandlerFunc) Handle
-
-```go
-func (h HandlerFunc) Handle(m Mime) bool
-```
-Handle calls the underlying func.
-
-#### type Mime
-
-```go
-type Mime string
-```
-
-Mime represents a accepted Mime Type.
-
-#### func (Mime) Match
-
-```go
-func (m Mime) Match(n Mime) bool
-```
-Match checks to see whether a given Mime Type matches the value.
-
-The method allows for wildcards in the subtype sections.
+https://pkg.go.dev/vimagination.zapto.org/httpaccept
