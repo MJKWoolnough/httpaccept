@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/MJKWoolnough/httpaccept/actions/workflows/go-checks.yml/badge.svg)](https://github.com/MJKWoolnough/httpaccept/actions)
 [![Go Reference](https://pkg.go.dev/badge/vimagination.zapto.org/httpaccept.svg)](https://pkg.go.dev/vimagination.zapto.org/httpaccept)
-[![Go Report Card](https://goreportcard.com/badge/vimagination.zapto.org/httpaccept)](https://goreportcard.com/report/vimagination.zapto.org/httpaccept)
 
 --
     import "vimagination.zapto.org/httpaccept"
